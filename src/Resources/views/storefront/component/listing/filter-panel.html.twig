@@ -20,8 +20,8 @@
                 elements: deliveryTimesSorted,
                 sidebar: sidebar,
                 name: 'deliveryTime',
-                displayName: 'listing.filterDeliveryTimeDisplayName'|trans|sw_sanitize,
-                ariaLabel: 'listing.filterByDeliveryTimeAriaLabel'|trans|sw_sanitize
+                displayName: 'Lieferzeit',
+                ariaLabel: ''
             } %}
         {% endif %}
     {% endblock %}
@@ -31,11 +31,11 @@
         {% set categories = listing.aggregations.get('categories') %}
         {% if not categories.entities is empty %}
             {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' with {
-                elements: ategories.entities,
+                elements: categories.entities,
                 sidebar: sidebar,
                 name: 'categories',
-                displayName: 'listing.filterDeliveryTimeDisplayName'|trans|sw_sanitize,
-                ariaLabel: 'listing.filterByDeliveryTimeAriaLabel'|trans|sw_sanitize
+                displayName: 'Kategorie',
+                ariaLabel: ''
             } %}
         {% endif %}
     {% endblock %}
