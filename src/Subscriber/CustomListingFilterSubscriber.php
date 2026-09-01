@@ -3,6 +3,8 @@
 namespace CtCustomListingFilters\Subscriber;
 
 use Acris\CustomerProductGroup\Custom\Events\CustomerProductGroupResultEvent;
+use Acris\Filter\Custom\FilterDefinition;
+use Acris\Filter\Custom\FilterEntity;
 use Acris\ProductFinder\Custom\Events\ProductFinderResultEvent;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -85,6 +87,74 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
             $ids
         );
         $filters->add($filter);
+    }
+
+
+    /**
+     * Keeps only valid uuids, so an invalid id from the url cannot reach the DAL,
+     * where it would throw an InvalidUuidException and break the whole listing page.
+     *
+     * @param string[] $ids
+     * @return string[]
+     */
+    private function filterValidUuids(array $ids): array
+    {
+        $valid = [];
+        foreach ($ids as $id) {
+            if (is_string($id) && Uuid::isValid($id)) {
+                $valid[] = $id;
+            }
+        }
+
+        return array_values(array_unique($valid));
+    }
+
+    /**
+     * Accepts only numeric values under a valid uuid key, limited in amount.
+     *
+     * @param array<string|int, mixed> $values
+     * @return array<string, float>
+     */
+
+    private function buildCategory(array $selectedCategoryIds, Context $context): \Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\Filter
+    {
+        $requestedCategoryIds = $selectedCategoryIds;
+        $selectedCategoryIds = $this->filterValidUuids($selectedCategoryIds);
+
+        // ids were requested but none of them is a valid uuid, so nothing can match
+        if ($selectedCategoryIds === [] && $requestedCategoryIds !== []) {
+            return new EqualsAnyFilter('product.id', [Uuid::randomHex()]);
+        }
+
+        if ($selectedCategoryIds === []) {
+            return new EqualsFilter('product.active', true);
+        }
+
+        $directCategoryIds = [];
+
+        $criteria = new Criteria($selectedCategoryIds);
+        $criteria->addFields(['id']);
+
+        $categories = $this->categoryRepository->search($criteria, $context)->getEntities();
+        foreach ($categories as $category) {
+            if (!$category instanceof PartialEntity) {
+                continue;
+            }
+
+            $directCategoryIds[] = $category->getId();
+        }
+
+        $queries = [];
+        if ($directCategoryIds !== []) {
+            $queries[] = new EqualsAnyFilter('product.categoriesRo.id', array_values(array_unique($directCategoryIds)));
+        }
+
+        // If no queries are generated, return a filter that excludes all products
+        if ($queries === []) {
+            return new EqualsAnyFilter('product.id', [Uuid::randomHex()]);
+        }
+
+        return new MultiFilter(MultiFilter::CONNECTION_OR, $queries);
     }
 
     private function getDeliveryTimeIds(Request $request): array
