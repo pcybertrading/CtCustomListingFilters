@@ -79,10 +79,30 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 
         $ids = $this->getCategoryIds($request);
 
+        $aggregation = new FilterAggregation(
+            'categories-filter',
+            new EntityAggregation(
+                'categories',
+                'product.categoriesRo.id',
+                'category'
+            ),
+            [
+                new NotFilter(
+                    NotFilter::CONNECTION_AND,
+                    [
+                        new EqualsFilter(
+                            'product.categoriesRo.id',
+                            '019f41cc661170e798ba75348ac191c1'
+                        ),
+                    ]
+                ),
+            ]
+        );
+
         $filter = new Filter(
             'categories',
             !empty($ids),
-            [new EntityAggregation('categories', 'product.categoriesRo.id', 'category')],
+            [$aggregation],
             $this->buildCategory($ids, $event->getSalesChannelContext()->getContext()),
             $ids
         );
