@@ -1,0 +1,157 @@
+{% block acris_filter_panel %}
+    {% set sortedFilters = listing.extensions.acrisFilter.sortedFilters %}
+    {% set hidedValue = false %}
+
+    {% for filter in sortedFilters %}
+
+        {% if filter.hide == true %}
+            {% if filter.identifier == 'price' %}
+                {% set price = listing.aggregations.get('price') %}
+
+                {% if price.min > 0 and price.max > 0 %}
+                    {% set hidedValue = true %}
+                {% endif %}
+            {% elseif filter.identifier == 'manufacturer' %}
+                {% set manufacturers = listing.aggregations.get('manufacturer') %}
+                {% if not manufacturers.entities is empty %}
+                    {% set hidedValue = true %}
+
+                {% endif %}
+            {% elseif filter.identifier == 'rating' %}
+                {% set rating = listing.aggregations.get('rating') %}
+                {% if not rating is empty %}
+                    {% set hidedValue = true %}
+                {% endif %}
+            {% elseif filter.identifier == 'shipping-free' %}
+                {% set shippingFree = listing.aggregations.get('shipping-free') %}
+
+                {% if shippingFree.max > 0 %}
+                    {% set hidedValue = true %}
+                {% endif %}
+
+            {% elseif filter.identifier == 'categories' %}
+                {# @var categories \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+                {% set categories = listing.aggregations.get('categories').extensions.acrisCategoryFilterAggregationTree.tree %}
+
+                {% if categories is not empty %}
+                    {% set hidedValue = true %}
+                {% endif %}
+            {% else %}
+                {% set hidedValue = true %}
+            {% endif %}
+        {% endif %}
+
+
+        {% if filter.identifier == 'properties' %}
+            {# @var properties \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+            {% set properties = listing.aggregations.get('properties') %}
+            {% if properties.entities is not empty %}
+                {% for property in properties.entities %}
+                    {% if property.translated.customFields.acris_filter_hide == true %}
+                        {% set hidedValue = true %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+
+    {% endfor %}
+
+    {% set showMoreFilters = false %}
+    {% for acrisFilter in listing.extensions.acrisFilter.sortedFilters %}
+        {% if acrisFilter.hide == true %}
+            {% set showMoreFilters = true %}
+        {% endif %}
+    {% endfor %}
+    {% set positonMoreFilter = config('AcrisFilterCS.config.positonMoreFilter') %}
+    {% set layoutMoreFilter = config('AcrisFilterCS.config.layoutMoreFilter') %}
+
+    {% block acris_filter_hidden_filters_loop %}
+        {% set randomIdForFilter = random(0,1000) %}
+
+        <div class="filter-panel-items-container{% if sidebar == false and isOffcanvas == false %} acris-filter-inline{% endif %}{% if config('AcrisFilterCS.config.disableFilterOptions') == 'hide' %} acris-hide-disabled-filters{% endif %}"
+             data-acris-offcanvas-appearance="{{ config('AcrisFilterCS.config.filterDisplayOffcanvas') }}"
+             data-acris-filter-panel-mobile="{{ config('AcrisFilterCS.config.mobileLayoutAppearance') }}">
+            {% if positonMoreFilter == 'start' and (isOffcanvas == false and hidedValue == true or showOffcanvas and showMoreFilters and listing.aggregations|length > 1) %}
+                <div class="{% if listing.total == 0 %}d-none {% endif %}filter-multi-select filter-multi-select-manufacturer filter-panel-item dropdown">
+                    {% block acris_filter_show_more_button_top %}
+                        {% sw_include '@AcrisFilterCS/storefront/component/listing/acris-show-more-filter-button.html.twig' %}
+                    {% endblock %}
+                </div>
+            {% endif %}
+            {% for filter in sortedFilters %}
+                {% if filter.identifier == 'properties' %}
+                    {% set properties = listing.aggregations.get('properties') %}
+                    {% if properties.entities is not empty %}
+                        {% for property in properties.entities %}
+                            {% if (filter.acrisPropertyGroupId is null or filter.acrisPropertyGroupId == property.id) and property.translated.customFields.acris_filter_hide != true %}
+                                {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/acris-filter-listing.html.twig' with {
+                                    propertyID: property.id,
+                                    dummyFilter: dummyFilter
+                                } %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% else %}
+                    {% if filter.hide != true %}
+                        {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/acris-filter-listing.html.twig' with {
+                            dummyFilter: dummyFilter
+                        } %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            {% if config('AcrisFilterCS.config.filterDisplayBehavior') != 'offcanvas' or isOffcanvas %}
+                {% if not showAllFilters %}
+                    <div id="filterCollapsed-{{ randomIdForFilter }}" class="collapse filter-panel-items-container{% if sidebar == false and isOffcanvas == false %} acris-filter-inline{% endif %}">
+                {% endif %}
+                {% for filter in sortedFilters %}
+                    {% if filter.identifier == 'properties' %}
+                        {% set properties = listing.aggregations.get('properties') %}
+                        {% if properties.entities is not empty %}
+                            {% for property in properties.entities %}
+                                {% if (filter.acrisPropertyGroupId is null or filter.acrisPropertyGroupId == property.id) and property.translated.customFields.acris_filter_hide == true %}
+                                    {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/acris-filter-listing.html.twig' with {
+                                        propertyID: property.id,
+                                        dummyFilter: dummyFilter
+                                    } %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% else %}
+                        {% if filter.hide == true %}
+                            {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/acris-filter-listing.html.twig' with {
+                                dummyFilter: dummyFilter
+                            } %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                {% if not showAllFilters %}
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            {% if positonMoreFilter != 'start' and (isOffcanvas == false and hidedValue == true or showOffcanvas and showMoreFilters and listing.aggregations|length > 1) %}
+                <div class="{% if listing.total == 0 %}d-none {% endif %}filter-multi-select filter-multi-select-manufacturer filter-panel-item dropdown">
+                    {% block acris_filter_show_more_button %}
+                        {% sw_include '@AcrisFilterCS/storefront/component/listing/acris-show-more-filter-button.html.twig' %}
+                    {% endblock %}
+                </div>
+            {% endif %}
+
+            {# The dummy offcanvas filter panel (#filterPanelOffcanvas) is required not only for the "More Filter"
+               offcanvas behaviour (showOffcanvas), but also whenever the offcanvas accordion appearance is selected
+               (filterDisplayOffcanvas == 'accordion'), because the accordion JS moves this dummy panel into the
+               OffCanvas. Without it the offcanvas filter plugin cannot find its content. The "dummyFilter != true"
+               guard prevents an infinite include when this template is rendered recursively inside the dummy panel. #}
+            {% if (showOffcanvas or config('AcrisFilterCS.config.filterDisplayOffcanvas') == 'accordion') and dummyFilter != true and isOffcanvas != true %}
+                {% block acris_filter_show_more_button_offcanvas_content %}
+                    {% sw_include '@AcrisFilterCS/storefront/component/listing/filter-panel-offcanvas.html.twig' with {
+                        listing: listing,
+                        sidebar: false,
+                        isOffcanvas: true
+                    } %}
+                {% endblock %}
+            {% endif %}
+        </div>
+    {% endblock %}
+{% endblock %}
