@@ -94,7 +94,7 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
                     [
                         new EqualsFilter(
                             'product.categoriesRo.level',
-                            '0'
+                            '1'
                         ),
                     ]
                 ),
