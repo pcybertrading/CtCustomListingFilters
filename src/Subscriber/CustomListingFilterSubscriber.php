@@ -43,6 +43,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Shopware\Core\Framework\Struct\ArrayEntity;
 
 
 class CustomListingFilterSubscriber implements EventSubscriberInterface
@@ -102,6 +103,10 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 //        $categoryFilter = $filterResult->getEntities()->filterByProperty('identifier', 'categories')->first();
 //
 
+        $event->getResult()->addExtension('hello', new ArrayEntity([
+                'foo' => 'bar',
+            ])
+        );
         $this->buildCategoryTree($event->getResult(), $event->getSalesChannelContext());
     }
 
