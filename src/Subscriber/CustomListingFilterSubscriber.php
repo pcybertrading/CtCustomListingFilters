@@ -332,7 +332,7 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 
     private function loadTree(string $parentId, CategoryCollection $categories, SalesChannelContext $context, ?FilterEntity $categoryFilter = null): array
     {
-        if ($categoryFilter && $categoryFilter->getLimitCategoryFilterScope() === FilterDefinition::LIMIT_CATEGORY_FILTER_SCOPE_CURRENT_TREE) {
+//        if ($categoryFilter) {
 
             $levels = [];
             foreach ($categories as $category) {
@@ -356,7 +356,7 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 
             $tree = $this->buildTree($parentId, $categories, false, $categoryFilter);
             return [new TreeItem($categories->get($parentId), $tree)];
-        }
+//        }
 
         if (!$categories->has($parentId)) return [];
 
