@@ -36,6 +36,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\MultiFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\OrFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
+use Shopware\Core\Framework\Struct\ArrayEntity;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
@@ -43,41 +44,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Shopware\Core\Framework\Struct\ArrayEntity;
 
 class CustomListingFilterSubscriber implements EventSubscriberInterface
 {
-    public const CUSTOM_FIELD_FILTER_NUMERIC_MIN = 'acris_filter_numeric';
-    public const CUSTOM_FIELD_FILTER_NUMERIC_MAX = 'acris_filter_numeric_max';
-
-    public const CUSTOM_FIELD_FILTER_TYPE = 'acris_filter_type';
-    public const CUSTOM_FIELD_FILTER_TYPE_RANGE_MIN_MAX = 'range_min_max';
-    public const CUSTOM_FIELD_FILTER_TYPE_RANGE_MIN_MAX_SILDER = 'range_min_max_slider';
-    public const CUSTOM_FIELD_FILTER_TYPE_RANGE_SLIDER = 'range_slider';
-
-    public const CUSTOM_FIELD_LOGIC_OPERATOR = 'acris_filter_logic_operator';
-    public const LOGIC_OPERATOR_OR = 'or';
-    public const LOGIC_OPERATOR_AND = 'and';
-
-    /**
-     * Upper bound for values taken from the request, so a crafted url cannot blow up the criteria
-     * or trigger one database query per submitted value.
-     */
-    private const MAX_REQUEST_FILTER_VALUES = 50;
-    private TreeItem $treeItem;
-
     public function __construct(
-        private readonly EntityRepository         $repository,
-        private readonly Connection               $connection,
-        private readonly EntityRepository         $optionRepository,
-        private readonly EntityRepository         $categoryRepository,
-        private readonly SystemConfigService      $systemConfigService,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly RequestStack             $requestStack,
-        private readonly EntityRepository         $productRepository
+        private readonly EntityRepository $categoryRepository
     )
     {
-        $this->treeItem = new TreeItem(null, []);
     }
 
     public static function getSubscribedEvents(): array
@@ -85,22 +58,12 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
         return [
             ProductSearchResultEvent::class => 'onProductListingSearchResultEvent',
             ProductListingCollectFilterEvent::class => 'addFilter'
-//            ProductListingResultEvent::class => 'getResult',
-//            ProductListingCriteriaEvent::class => 'handleCriteria',
-//            ProductSearchCriteriaEvent::class => 'handleCriteria',
         ];
     }
 
     public function onProductListingSearchResultEvent(ProductListingResultEvent $event): void
     {
         $this->buildCategoryTree($event->getResult(), $event->getSalesChannelContext());
-    }
-
-    public function handleCriteria(ProductListingCriteriaEvent $event): void
-    {
-        $criteria = $event->getCriteria();
-        $criteria->addAssociation('categoriesRo');
-        $criteria->addAssociation('mainCategories');
     }
 
     public function addFilter(ProductListingCollectFilterEvent $event): void
