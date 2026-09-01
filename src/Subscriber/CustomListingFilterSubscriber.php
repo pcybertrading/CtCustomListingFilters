@@ -93,8 +93,8 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
                     NotFilter::CONNECTION_AND,
                     [
                         new EqualsFilter(
-                            'product.categoriesRo.id',
-                            '019f41cc661170e798ba75348ac191c1'
+                            'product.categoriesRo.level',
+                            '0'
                         ),
                     ]
                 ),
