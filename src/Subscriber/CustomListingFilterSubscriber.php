@@ -95,26 +95,9 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 
     public function onProductListingSearchResultEvent(ProductListingResultEvent $event): void
     {
-        $filterResult = $this->filterRepository->search((new Criteria())->addSorting(new FieldSorting('position', FieldSorting::ASCENDING))->addFilter(new EqualsFilter('active', true)), $event->getContext());
-        $this->sortFilterResult($filterResult);
-
-        $propertyFilterPosition = $this->systemConfigService->get('AcrisFilterCS.config.propertyFilterPosition', $event->getSalesChannelContext()->getSalesChannelId()) ?? 'combined';
-
-        $sortedFilters = $filterResult->getEntities()->getElements();
-        if ($propertyFilterPosition === 'individual') {
-            $sortedFilters = $this->buildIndividualSortedFilters($filterResult->getEntities(), $event->getResult());
-        }
-
-        if (!empty($sortedFilters)) {
-            $event->getResult()->addExtension('acrisFilter', new ArrayEntity([
-                'sortedFilters' => $sortedFilters,
-                'propertyFilterPosition' => $propertyFilterPosition
-            ]));
-        }
-
-        /** @var FilterEntity|null $categoryFilter */
-        $categoryFilter = $filterResult->getEntities()->filterByProperty('identifier', 'categories')->first();
-
+        $event->getResult()->addExtension('acrisFilter', new ArrayEntity([
+            'sortedFilters' => ['foo' => 'bar'],
+        ]));
         $this->buildCategoryTree($event->getResult(), $event->getSalesChannelContext(), $categoryFilter);
     }
 
