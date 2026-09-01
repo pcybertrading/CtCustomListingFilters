@@ -98,7 +98,7 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
         $event->getResult()->addExtension('acrisFilter', new ArrayEntity([
             'sortedFilters' => ['foo' => 'bar'],
         ]));
-        $this->buildCategoryTree($event->getResult(), $event->getSalesChannelContext(), $categoryFilter);
+        $this->buildCategoryTree($event->getResult(), $event->getSalesChannelContext());
     }
 
     public function handleCriteria(ProductListingCriteriaEvent $event): void
