@@ -30,8 +30,6 @@
 
     {% block component_filter_panel_item_rating_select %}{% endblock %}
 
-    {% block component_filter_panel_item_shipping_free %}{% endblock %}
-
     {% block component_filter_panel_item_price %}
         {% set price = listing.aggregations.get('price') %}
         {% if price.min !== null and price.max !== null %}
