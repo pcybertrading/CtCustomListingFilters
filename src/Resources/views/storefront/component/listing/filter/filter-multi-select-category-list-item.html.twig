@@ -1,0 +1,54 @@
+{% block component_filter_multi_select_list_item %}
+    <li class="filter-multi-select-list-item">
+{#        <div class="form-check">#}
+            {% set id = element.id %}
+            {% set name = element.translated.name %}
+
+{#            {% block component_filter_multi_select_parent_list_item_checkbox_input %}#}
+{#                <input type="checkbox"#}
+{#                       class="form-check-input filter-multi-select-checkbox"#}
+{#                       data-label="{{ name }}"#}
+{#                       value="{{ id }}"#}
+{#                       id="{{ id }}">#}
+{#            {% endblock %}#}
+
+            {% block component_filter_multi_select_parent_list_item_label_element %}
+                <label class="filter-multi-select-item-label form-check-label" for="{{ id }}">
+                    {% block component_multi_select_parent_list_item_label %}
+                        {{ name }}
+                    {% endblock %}
+                </label>
+            {% endblock %}
+{#        </div>#}
+    </li>
+
+    {% if element.children !== null %}
+        <li class="filter-multi-select-list-item">
+            <ul class="filter-multi-select-list" aria-label="{{ displayName }}">
+                {% for child in element.children %}
+                    {% set id = child.id %}
+                    {% set name = child.translated.name %}
+                    <li class="filter-multi-select-list-item">
+                        <div class="form-check">
+                        {% block component_filter_multi_select_child_list_item_checkbox_input %}
+                            <input type="checkbox"
+                                   class="form-check-input filter-multi-select-checkbox"
+                                   data-label="{{ name }}"
+                                   value="{{ id }}"
+                                   id="{{ id }}">
+                        {% endblock %}
+
+                        {% block component_filter_multi_select_child_list_item_label_element %}
+                            <label class="filter-multi-select-item-label form-check-label" for="{{ id }}">
+                                {% block component_multi_select_child_list_item_label %}
+                                    {{ name }}
+                                {% endblock %}
+                            </label>
+                        {% endblock %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endif %}
+{% endblock %}

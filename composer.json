@@ -1,0 +1,27 @@
+{
+    "name": "ct-custom-listing-filters/ct-custom-listing-filters",
+    "description": "ct-custom-listing-filters/ct-custom-listing-filters",
+    "type": "shopware-platform-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "require": {
+        "shopware/core": "~6.7.0"
+    },
+    "extra": {
+        "shopware-plugin-class": "CtCustomListingFilters\\CtCustomListingFilters",
+        "label": {
+            "de-DE": "Cybertrading Custom Listing Filter",
+            "en-GB": "Cybertrading custom listing filters"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "CtCustomListingFilters\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CtCustomListingFilters\\Tests\\": "tests/"
+        }
+    }
+}

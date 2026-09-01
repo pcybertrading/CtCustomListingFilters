@@ -1,0 +1,21 @@
+{% sw_extends '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' %}
+
+{% if dataPluginSelectorOptions is not defined %}
+    {% set dataPluginSelectorOptions = {
+        name: name,
+        propertyName: categoryName,
+        snippets: {
+            disabledFilterText: 'listing.disabledFilterTooltip'|trans|sw_sanitize,
+            ariaLabel: ariaLabel,
+            ariaLabelCount: 'listing.filterCountAriaLabel'|trans|sw_sanitize
+        }
+    } %}
+{% endif %}
+
+{% block component_filter_multi_select_list_item %}
+    <li class="filter-multi-select-list-item filter-category-select-list-item">
+            {% block component_filter_category_select_preview_list_item %}
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select-category-list-item.html.twig' %}
+            {% endblock %}
+    </li>
+{% endblock %}
