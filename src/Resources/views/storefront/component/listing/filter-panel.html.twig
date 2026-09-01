@@ -10,30 +10,6 @@
         {{ parent() }}
     {% endblock %}
 
-    {#    {% block component_filter_panel_item_category %}#}
-    {#         @var categories \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult#}
-    {#        {% set categories = listing.aggregations.get('category') %}#}
-
-    {#        {% if not categories.entities is empty %}#}
-    {#            {% for category in categories.entities %}#}
-    {#                {% if category.name === 'DE' %}#}
-    {#                    {% sw_include '@CtCustomFilters/storefront/component/listing/filter/filter-category-select.html.twig' ignore missing with {#}
-    {#                        elements: category.children,#}
-    {#                        sidebar: 0,#}
-    {#                        name: 'category',#}
-    {#                        displayName: 'listing.filterCategoryDisplayName'|trans|sw_sanitize,#}
-    {#                        displayType: '',#}
-    {#                        pluginSelector: 'filter-property-select',#}
-    {#                        propertyName: category.translated.name,#}
-    {#                        ariaLabel: 'listing.filterByCategoryAriaLabel'|trans|sw_sanitize#}
-    {#                    } %}#}
-    {#                {% endif %}#}
-    {#            {% endfor %}#}
-    {#        {% endif %}#}
-    {#    {% endblock %}#}
-
-
-
     {% block component_filter_panel_item_delivery_time %}
         {# @var deliveryTimes \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
         {% set deliveryTimes = listing.aggregations.get('deliveryTime') %}
