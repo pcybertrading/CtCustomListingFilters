@@ -56,14 +56,8 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            ProductSearchResultEvent::class => 'onProductListingSearchResultEvent',
             ProductListingCollectFilterEvent::class => 'addFilter'
         ];
-    }
-
-    public function onProductListingSearchResultEvent(ProductListingResultEvent $event): void
-    {
-        $this->buildCategoryTree($event->getResult(), $event->getSalesChannelContext());
     }
 
     public function addFilter(ProductListingCollectFilterEvent $event): void
