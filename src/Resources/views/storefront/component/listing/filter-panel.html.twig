@@ -6,5 +6,69 @@
 {% endblock %}
 
 {% block component_filter_panel_items %}
-    {{ parent() }}
+    {% block component_filter_panel_item_manufacturer %}
+        {{ parent() }}
+    {% endblock %}
+
+    {#    {% block component_filter_panel_item_category %}#}
+    {#         @var categories \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult#}
+    {#        {% set categories = listing.aggregations.get('category') %}#}
+
+    {#        {% if not categories.entities is empty %}#}
+    {#            {% for category in categories.entities %}#}
+    {#                {% if category.name === 'DE' %}#}
+    {#                    {% sw_include '@CtCustomFilters/storefront/component/listing/filter/filter-category-select.html.twig' ignore missing with {#}
+    {#                        elements: category.children,#}
+    {#                        sidebar: 0,#}
+    {#                        name: 'category',#}
+    {#                        displayName: 'listing.filterCategoryDisplayName'|trans|sw_sanitize,#}
+    {#                        displayType: '',#}
+    {#                        pluginSelector: 'filter-property-select',#}
+    {#                        propertyName: category.translated.name,#}
+    {#                        ariaLabel: 'listing.filterByCategoryAriaLabel'|trans|sw_sanitize#}
+    {#                    } %}#}
+    {#                {% endif %}#}
+    {#            {% endfor %}#}
+    {#        {% endif %}#}
+    {#    {% endblock %}#}
+
+
+
+    {% block component_filter_panel_item_delivery_time %}
+        {# @var deliveryTimes \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+        {% set deliveryTimes = listing.aggregations.get('deliveryTime') %}
+        {% if not deliveryTimes.entities is empty %}
+            {% set deliveryTimesSorted = deliveryTimes.entities|sort((a, b) => a.translated.name|lower <=> b.translated.name|lower) %}
+
+            {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' with {
+                elements: deliveryTimesSorted,
+                sidebar: sidebar,
+                name: 'deliveryTime',
+                displayName: 'listing.filterDeliveryTimeDisplayName'|trans|sw_sanitize,
+                ariaLabel: 'listing.filterByDeliveryTimeAriaLabel'|trans|sw_sanitize
+            } %}
+        {% endif %}
+    {% endblock %}
+
+    {% block component_filter_panel_item_properties %}{% endblock %}
+
+    {% block component_filter_panel_item_rating_select %}{% endblock %}
+
+    {% block component_filter_panel_item_shipping_free %}{% endblock %}
+
+    {% block component_filter_panel_item_price %}
+        {% set price = listing.aggregations.get('price') %}
+        {% if price.min !== null and price.max !== null %}
+            {% sw_include '@ITMarketTheme/ITMarketTheme/component/listing/filter/filter-range.html.twig' with {
+                sidebar: sidebar,
+                name: 'price',
+                minKey: 'min-price',
+                maxKey: 'max-price',
+                lowerBound: 0,
+                displayName: 'listing.filterPriceDisplayName'|trans|sw_sanitize,
+                minInputValue: 0,
+                maxInputValue: price.max,
+            } %}
+        {% endif %}
+    {% endblock %}
 {% endblock %}
