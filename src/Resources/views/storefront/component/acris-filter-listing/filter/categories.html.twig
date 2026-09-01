@@ -1,0 +1,115 @@
+{% set filterItemId = 'filter-' ~ name ~ '-' ~ random() %}
+
+{% if level is not defined %}
+    {% set level = 0 %}
+{% endif %}
+
+{% if dataPluginSelectorOptions is not defined %}
+    {% set dataPluginSelectorOptions = {
+        name: name,
+        snippets: {
+            disabledFilterText: 'listing.disabledFilterTooltip'|trans|sw_sanitize
+        },
+    } %}
+{% endif %}
+
+{% block component_filter_categories %}
+    <div class="filter-multi-select filter-categories filter-multi-select-{{ name|lower|replace({' ': '', '(':'', ')':'', '/':''}) }} filter-panel-item{% if isOffcanvas == false and sidebar %} d-grid{% elseif isOffcanvas == false and sidebar == false %} dropdown{% endif %}"
+         data-name="{{ name|lower|replace({' ': '', '(':'', ')':'', '/':''}) }}"
+         {% if dummyFilter %}
+             {% set dataPluginSelectorOptions = dataPluginSelectorOptions|merge({
+                 filterType: 'category'
+             }) %}
+             data-acris-filter-dummy-offcanvas="true"
+             data-acris-filter-dummy-offcanvas-options='{{ dataPluginSelectorOptions|json_encode }}'
+         {% else %}
+            data-filter-multi-select="true"
+            data-filter-multi-select-options='{{ dataPluginSelectorOptions|json_encode }}'
+        {% endif %}
+    >
+        {% block component_filter_categories_toggle %}
+            <button class="filter-panel-item-toggle btn"
+                aria-expanded="false"
+                {% if config('AcrisFilterCS.config.filterDisplayOffcanvas') == 'accordion' and isOffcanvas or sidebar %}
+                    data-bs-toggle="collapse"
+                    data-bs-target="#{{ filterItemId }}"
+                {% else %}
+                    data-bs-toggle="dropdown"
+                    data-boundary="viewport"
+                    data-bs-offset="0,8"
+                    aria-haspopup="true"
+                {% endif %}>
+
+                {% block component_filter_categories_display_name %}
+                    {{ displayName }}
+                {% endblock %}
+
+                {% block component_filter_categories_count %}
+                    <span class="filter-multi-select-count count-{{ name|lower|replace({' ': '', '(':'', ')':'', '/':''}) }}"></span>
+                {% endblock %}
+
+                {% block component_filter_categories_toggle_icon %}
+                    {% sw_icon 'arrow-medium-down' style {
+                        'pack': 'solid', 'size': 'xs', 'class': 'filter-panel-item-toggle'
+                    } %}
+                {% endblock %}
+            </button>
+        {% endblock %}
+
+        {% block component_filter_categories_dropdown %}
+            <div class="filter-multi-select-dropdown filter-panel-item-dropdown{% if config('AcrisFilterCS.config.filterDisplayOffcanvas') == 'accordion' and isOffcanvas or sidebar %} collapse{% else %} dropdown-menu{% endif %}"
+                 id="{{ filterItemId }}">
+                {% block component_filter_categories_list_acris_filter_wrapper_input %}
+                    {% set categoryCount = 0 %}
+                    {% for cat in elements %}
+                        {% set categoryCount = categoryCount + 1 %}
+                        {% if cat.children is not empty %}
+                            {% for subcat in cat.children %}
+                                {% set categoryCount = categoryCount + 1 %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if config('AcrisFilterCS.config.activeFilterDropdownSearch') and config('AcrisFilterCS.config.filterSearchVisibleAfter') < categoryCount %}
+                        <div class="acris-filter-input-search-wrapper filter-multi-select-list-item">
+                            <input class="form-control acris-filter-input-field" type="text"
+                                   id="acris-dropdown-{{ filterItemId }}" placeholder="{{ "acrisFilter.filterSearchPlaceholder"|trans|sw_sanitize }}"
+                                   value="">
+                        </div>
+                    {% endif %}
+                {% endblock %}
+
+                {% block component_filter_categories_list %}
+                    <ul class="filter-multi-select-list is-level-{{ level }}">
+                        {% for element in elements %}
+                            {% block component_filter_categories_list_item %}
+                                <li class="filter-multi-select-list-item">
+                                    {% block component_filter_categories_list_item_inner %}
+                                        {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/categories-list-item.html.twig' with {
+                                            level: level + 1
+                                        } %}
+                                    {% endblock %}
+                                </li>
+                            {% endblock %}
+                        {% endfor %}
+                    </ul>
+                {% endblock %}
+
+                {% block component_filter_categories_confirm_button %}
+                    {% if config('AcrisFilterCS.config.showFilterConfirmButton') == 'true' %}
+                        <div class="filter-multi-select-confirm filter-multi-select-list-item">
+                            <button class="btn btn-primary btn-block filter-multi-select-confirm-button"
+                                    {% if config('AcrisFilterCS.config.filterDisplayOffcanvas') == 'accordion' and isOffcanvas or sidebar %}
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#{{ filterItemId }}"
+                                    {% else %}
+                                        onclick="this.closest('.dropdown').querySelector('.filter-panel-item-toggle').click();"
+                                    {% endif %}>
+                                {{ "acrisFilter.filterConfirmButton"|trans|sw_sanitize }}
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endblock %}
+            </div>
+        {% endblock %}
+    </div>
+{% endblock %}

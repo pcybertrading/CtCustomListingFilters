@@ -1,0 +1,159 @@
+{% sw_extends '@Storefront/storefront/component/listing/filter-panel.html.twig' %}
+
+{% block component_filter_panel %}
+    {% if filter.identifier == 'manufacturer' %}
+        {% block component_filter_panel_item_manufacturer %}{{ parent() }}{% endblock %}
+    {% elseif filter.identifier == 'price' %}
+        {% block component_filter_panel_item_price %}
+            {% if filter.filterType == 'range_slider' || filter.filterType == 'range_min_max_slider' %}
+                {% set price = listing.aggregations.get('price') %}
+
+                {% if price.max > 0 %}
+                    {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/price-range-slider.html.twig' with {
+                        price: price,
+                        sidebar: sidebar,
+                        name: 'price',
+                        minKey: 'min-price',
+                        maxKey: 'max-price',
+                        filterType: filter.filterType,
+                        displayName: 'listing.filterPriceDisplayName'|trans|sw_sanitize,
+                    } %}
+                {% endif %}
+            {% else %}
+                {{ parent() }}
+            {% endif %}
+        {% endblock %}
+    {% elseif filter.identifier == 'rating' %}
+        {% block component_filter_panel_item_rating_select %}{{ parent() }}{% endblock %}
+    {% elseif filter.identifier == 'shipping-free' %}
+        {% block component_filter_panel_item_shipping_free %}{{ parent() }}{% endblock %}
+    {% elseif filter.identifier == 'availability' %}
+        {% block component_filter_panel_item_availability %}
+            {% set availability = listing.aggregations.get('availability') %}
+
+            {% if availability.max > 0 %}
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-boolean.html.twig' with {
+                    name: 'availability',
+                    displayName: 'acrisFilter.filterAvailabilityDisplayName'|trans|sw_sanitize,
+                    dummyFilter: dummyFilter
+                } %}
+            {% endif %}
+        {% endblock %}
+    {% elseif filter.identifier == 'properties' %}
+        {% block component_filter_panel_item_properties %}
+            {# @var properties \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+            {% set properties = listing.aggregations.get('properties') %}
+
+            {% if not properties.entities is empty %}
+                {% for property in properties.entities %}
+                    {# {% if hidden and (isCollapsedFilter == true and property.translated.customFields.acris_filter_hide == true or isCollapsedFilter == false and property.translated.customFields.acris_filter_hide != true) %} #}
+                    {% set altPropertyName = property.translated.customFields.acris_alternative_filter_name ?? '' %}
+                    {% set propertyDisplayName = altPropertyName|trim|length > 0 ? altPropertyName|trim : property.translated.name %}
+                    {% if propertyID %}
+                        {% if property.id == propertyID %}
+                            {% if property.translated.customFields.acris_filter_type == 'range_min_max' %}
+                                {% set propertyFilterIncludeFile = '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/range-min-max-select.html.twig' %}
+                            {% elseif property.translated.customFields.acris_filter_type == 'range_slider' %}
+                                {% set propertyFilterIncludeFile = '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/range-slider.html.twig' %}
+                            {% elseif property.translated.customFields.acris_filter_type == 'range_slider_single' %}
+                                {% set propertyFilterIncludeFile = '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/range-slider-single.html.twig' %}
+                            {% elseif property.translated.customFields.acris_filter_type == 'range_min_max_slider' %}
+                                {% set propertyFilterIncludeFile = '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/range-min-max-slider.html.twig' %}
+                            {% else %}
+                                {% set propertyFilterIncludeFile = '@Storefront/storefront/component/listing/filter/filter-property-select.html.twig' %}
+                            {% endif %}
+
+                            {% sw_include propertyFilterIncludeFile with {
+                                elements: property.options,
+                                sidebar: sidebar,
+                                name: 'properties',
+                                minKey: 'min-property',
+                                maxKey: 'max-property',
+                                displayName: propertyDisplayName,
+                                displayType: property.displayType,
+                                pluginSelector: 'filter-property-select',
+                                propertyName: property.translated.name
+                            } %}
+                        {% endif %}
+                    {% else %}
+                        {% if property.translated.customFields.acris_filter_type == 'range_min_max' %}
+                            {% set propertyFilterIncludeFile = '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/range-min-max-select.html.twig' %}
+                        {% elseif property.translated.customFields.acris_filter_type == 'range_slider' %}
+                            {% set propertyFilterIncludeFile = '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/range-slider.html.twig' %}
+                        {% elseif property.translated.customFields.acris_filter_type == 'range_min_max_slider' %}
+                            {% set propertyFilterIncludeFile = '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/range-min-max-slider.html.twig' %}
+                        {% else %}
+                            {% set propertyFilterIncludeFile = '@Storefront/storefront/component/listing/filter/filter-property-select.html.twig' %}
+                        {% endif %}
+
+                        {% sw_include propertyFilterIncludeFile with {
+                            elements: property.options,
+                            sidebar: sidebar,
+                            name: 'properties',
+                            minKey: 'min-property',
+                            maxKey: 'max-property',
+                            displayName: propertyDisplayName,
+                            displayType: property.displayType,
+                            pluginSelector: 'filter-property-select',
+                            propertyName: property.translated.name
+                        } %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endblock %}
+    {% elseif filter.identifier in ['width', 'height', 'length', 'weight'] %}
+        {% block component_filter_panel_item_acris_product_range %}
+            {% set productRangeStats = listing.aggregations.get(filter.identifier) %}
+
+            {% if productRangeStats and productRangeStats.max is not null %}
+                {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/product-range.html.twig' with {
+                    stats: productRangeStats,
+                    identifier: filter.identifier,
+                    filterType: filter.filterType,
+                    sidebar: sidebar,
+                    displayName: ('acrisFilter.filter' ~ filter.identifier|capitalize ~ 'DisplayName')|trans|sw_sanitize
+                } %}
+            {% endif %}
+        {% endblock %}
+    {% elseif filter.identifier == 'categories' %}
+        {# @var categories \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+        {% set categories = listing.aggregations.get('categories').extensions.acrisCategoryFilterAggregationTree.tree %}
+
+        {% if categories != null %}
+            {% for mainCategory in categories %}
+                {% if mainCategory.children is not empty %}
+                    {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/categories.html.twig' with {
+                        elements: mainCategory.children,
+                        sidebar: sidebar,
+                        name: 'categories',
+                        displayName: 'acrisFilter.filterCategoriesDisplayName'|trans|sw_sanitize
+                    } %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% elseif filter.identifier == 'product_stream' %}
+        {% set productStreams = listing.aggregations.get('productStream') %}
+
+        {% if productStreams %}
+            {% set acrisProductStreamFilterAggregationData = productStreams.extensions.acrisProductStreamFilterAggregationData %}
+            {% set productStreamFilterSlug = 'product_stream' %}
+            {% set productStreamFilterTitle = 'acrisFilter.filterProductStreamDisplayName'|trans|sw_sanitize %}
+
+            {% if not productStreams.entities is empty %}
+                {% set productStreamsSorted = productStreams.entities|sort((a, b) =>
+                    (acrisProductStreamFilterAggregationData.get(a.id).title|default(a.translated.name))|lower
+                    <=> (acrisProductStreamFilterAggregationData.get(b.id).title|default(b.translated.name))|lower
+                ) %}
+
+                {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' with {
+                    elements: productStreamsSorted,
+                    sidebar: false,
+                    name: productStreamFilterSlug,
+                    displayName: productStreamFilterTitle,
+                    acrisProductStreamUrlData: acrisProductStreamFilterAggregationData,
+                    ariaLabel: productStreamFilterTitle
+                } %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+{% endblock %}

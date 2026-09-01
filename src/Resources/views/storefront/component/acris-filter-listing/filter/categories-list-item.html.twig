@@ -1,0 +1,52 @@
+
+{% block component_filter_categories_list_item %}
+    <div class="form-check">
+        {% set id = element.category.id %}
+        {% set name = element.category.translated.name %}
+        {% block component_filter_categories_list_item_checkbox_input %}
+            <input type="checkbox"
+                   class="form-check-input filter-multi-select-checkbox filter-categories-checkbox"
+                   data-label="{{ name }}"
+                   data-input-id="{{ id }}"
+                   value="{{ id }}"
+                   id="{{ id }}">
+        {% endblock %}
+
+        {% block component_filter_categories_list_item_label_element %}
+            <label class="filter-multi-select-item-label form-check-label filter-categories-item-label{% if config('AcrisFilterCS.config.categoryFilterLayer1FontWeight') != 'normal' and level == 1 %} fw-{{ config('AcrisFilterCS.config.categoryFilterLayer1FontWeight') }}{% endif %}" for="{{ id }}">
+                {% block component_categories_list_item_label %}
+                    {{ name }}
+
+                    {# elasticsearch filter count #}
+                    {% set element = element.category %}
+                    {% block component_categories_list_item_label_count %}
+                        {% if element and element.extensions.aggregationDocCount and element.extensions.aggregationDocCount.docCount > 0 %}
+                            <span class="acris-filter-count acris-filter-count-select-list filter-count-{{ element.id }}"
+                                  data-term-count-id="{{ element.id }}"
+                                  data-term-count-label-before="{{ "acrisFilter.filter.labelBefore"|trans }}"
+                                  data-term-count-label-after="{{ "acrisFilter.filter.labelAfter"|trans }}">
+                                {{ "acrisFilter.filter.labelBefore"|trans }}{{ element.extensions.aggregationDocCount.docCount }}{{ "acrisFilter.filter.labelAfter"|trans }}
+                            </span>
+                        {% endif %}
+                    {% endblock %}
+                {% endblock %}
+            </label>
+        {% endblock %}
+    </div>
+
+    {% block component_filter_categories_list_item_children %}
+        {% if element.children|length > 0 %}
+            <ul class="filter-multi-select-list is-level-{{ level }}">
+                {% for element in element.children %}
+                    {% block component_filter_categories_list_item_children_list_item %}
+                        <li class="filter-multi-select-list-item">
+                            {% sw_include '@AcrisFilterCS/storefront/component/acris-filter-listing/filter/categories-list-item.html.twig' with {
+                                level: level + 1
+                            } %}
+                        </li>
+                    {% endblock %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endblock %}
+{% endblock %}

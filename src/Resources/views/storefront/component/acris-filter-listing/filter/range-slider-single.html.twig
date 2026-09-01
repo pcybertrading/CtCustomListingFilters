@@ -1,0 +1,214 @@
+{% set filterItemId = 'filter-' ~ name ~ '-' ~ random() %}
+
+{% if currencySymbol is not defined %}
+    {% if property.translated.customFields.acris_filter_unit %}
+        {% set currencySymbol = property.translated.customFields.acris_filter_unit %}
+    {% else %}
+        {% set currencySymbol = context.currency.symbol %}
+    {% endif %}
+{% endif %}
+
+{% set filterTextBefore = '' %}
+{% set filterTextAfter = '' %}
+
+{% if property.translated.customFields.acris_filter_text_before %}
+    {% set filterTextBefore = property.translated.customFields.acris_filter_text_before %}
+{% endif %}
+{% if property.translated.customFields.acris_filter_text_after %}
+    {% set filterTextAfter = property.translated.customFields.acris_filter_text_after %}
+{% endif %}
+
+{% set hasFloat = false %}
+
+{% set minElementValue = null %}
+{% set maxElementValue = null %}
+
+{% for element in elements %}
+    {% if minElementValue is null or element.translated.customFields.acris_filter_numeric < minElementValue %}
+        {% set minElementValue = element.translated.customFields.acris_filter_numeric|round(1, 'floor') %}
+    {% endif %}
+
+    {% if maxElementValue is null or element.translated.customFields.acris_filter_numeric_max > maxElementValue %}
+        {% set maxElementValue = element.translated.customFields.acris_filter_numeric_max|round(1, 'ceil') %}
+    {% elseif maxElementValue is null or element.translated.customFields.acris_filter_numeric > maxElementValue %}
+        {% set maxElementValue = element.translated.customFields.acris_filter_numeric|round(1, 'ceil') %}
+    {% endif %}
+
+    {% if element.translated.customFields.acris_filter_numeric_max matches '/^[-+]?[0-9]*\\.[1-9]+$/' or element.translated.customFields.acris_filter_numeric matches '/^[-+]?[0-9]*\\.[1-9]+$/' %}
+        {% set hasFloat = true %}
+    {% endif %}
+{% endfor %}
+
+{% if minElementValue is null %}{% set minElementValue = 0 %}{% endif %}
+{% if maxElementValue is null %}{% set maxElementValue = 0 %}{% endif %}
+
+{% if filterRangeActiveMinLabel is not defined %}
+    {% set filterRangeActiveMinLabel = 'acrisFilter.filterRangeSingleActiveLabel'|trans({
+        '%displayName%': displayName
+    })|sw_sanitize %}
+{% endif %}
+
+{% if filterRangeActiveMaxLabel is not defined %}
+    {% set filterRangeActiveMaxLabel = 'acrisFilter.filterRangeSingleActiveLabel'|trans({
+        '%displayName%': displayName
+    })|sw_sanitize %}
+{% endif %}
+
+{% if filterRangeErrorMessage is not defined %}
+    {% set filterRangeErrorMessage = 'listing.filterRangeErrorMessage'|trans|sw_sanitize %}
+{% endif %}
+
+{% set minKey = minKey~'['~property.id~']' %}
+{% set maxKey = maxKey~'['~property.id~']' %}
+{% set queryParams = app.request.query.all() %}
+
+{# the query values are rendered into the filter, so only accept plain numbers #}
+{% if queryParams %}
+    {% if queryParams['min-property'] %}
+        {% set rawMinValue = queryParams['min-property'][property.id]|default(null) %}
+        {% if rawMinValue is not null and rawMinValue is not iterable and rawMinValue matches '/^-?\\d+(?:\\.\\d+)?$/' %}
+            {% set currentMinValue = rawMinValue %}
+        {% endif %}
+    {% endif %}
+{% endif %}
+{% if queryParams %}
+    {% if queryParams['max-property'] %}
+        {% set rawMaxValue = queryParams['max-property'][property.id]|default(null) %}
+        {% if rawMaxValue is not null and rawMaxValue is not iterable and rawMaxValue matches '/^-?\\d+(?:\\.\\d+)?$/' %}
+            {% set currentMaxValue = rawMaxValue %}
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+{% set filterRangeSliderOptions = {
+    name: displayName,
+    selector: 'range-slider-single-' ~ property.id,
+    minKey: minKey,
+    maxKey: maxKey,
+    minValue: minElementValue,
+    maxValue: maxElementValue,
+    currentMinValue: currentMinValue,
+    currentMaxValue: currentMaxValue,
+    currencySymbol: currencySymbol,
+    snippets: {
+        filterRangeActiveMinLabel: filterRangeActiveMinLabel,
+        filterRangeActiveMaxLabel: filterRangeActiveMaxLabel,
+        filterRangeErrorMessage: filterRangeErrorMessage
+    },
+    propertyId: property.id,
+    dummyFilter: dummyFilter,
+    filterId: 'filter-' ~ displayName,
+    hasFloat: hasFloat
+} %}
+
+{% block component_filter_range_slider_single %}
+    <div class="filter-range-slider filter-panel-item{% if isOffcanvas == false and sidebar %} d-grid{% elseif isOffcanvas == false and sidebar == false %} dropdown{% endif %}"
+            {% if dummyFilter %}
+                {% set filterRangeSliderOptions = filterRangeSliderOptions |merge ({
+                    filterType: 'rangeSliderSingle',
+                    displayName: displayName,
+                    filterId: 'filter-' ~ displayName
+                }) %}
+                data-acris-filter-dummy-offcanvas="true"
+                data-acris-filter-dummy-offcanvas-options='{{ filterRangeSliderOptions|json_encode }}'
+            {% else %}
+                data-acris-filter-range-slider-single="true"
+                data-acris-filter-range-slider-single-options='{{ filterRangeSliderOptions|json_encode }}'
+                data-filter-id="{{ 'filter-' ~ displayName }}"
+            {% endif %}
+    >
+
+        {% block component_filter_range_slider_single_toggle %}
+            <button class="filter-panel-item-toggle btn property-range-slider-{{ displayName|replace({' ': ''}) }} range-slider-{{ property.id }}"
+                    aria-expanded="false"
+                    id="range-slider-single-{{ property.id }}"
+                    {% if config('AcrisFilterCS.config.filterDisplayOffcanvas') == 'accordion' and isOffcanvas or sidebar %}
+                data-bs-toggle="collapse"
+                data-bs-target="#{{ filterItemId }}"
+            {% else %}
+                data-bs-toggle="dropdown"
+                data-boundary="viewport"
+                data-bs-offset="0,8"
+                aria-haspopup="true"
+                    {% endif %}>
+
+                {% block component_filter_range_slider_single_display_name %}
+                    {{ displayName }}
+                {% endblock %}
+
+                {% block component_filter_range_slider_single_toggle_icon %}
+                    {% sw_icon 'arrow-medium-down' style {'pack': 'solid', 'size': 'xs', 'class': 'filter-panel-item-toggle'} %}
+                {% endblock %}
+            </button>
+        {% endblock %}
+
+        {% block component_filter_range_slider_single_dropdown %}
+            <div class="filter-range-slider-single-dropdown filter-panel-item-dropdown{% if config('AcrisFilterCS.config.filterDisplayOffcanvas') == 'accordion' and isOffcanvas or sidebar %} collapse{% else %} dropdown-menu{% endif %}"
+                 id="{{ filterItemId }}">
+
+                {% block component_filter_range_slider_single_container %}
+                    <div class="filter-range-slider-single-container w-100">
+
+                        {% block component_filter_range_slider_single_inputs %}
+                            {% block component_filter_range_slider_single_input_min %}
+                                <input class="form-control min-input"
+                                       type="hidden"
+                                       name="min-property[{{ property.id }}]">
+                            {% endblock %}
+
+                            {% block component_filter_range_slider_single_input_max %}
+                                <input class="form-control max-input"
+                                       type="hidden"
+                                       name="max-property[{{ property.id }}]">
+                            {% endblock %}
+                        {% endblock %}
+
+
+                        {% block component_filter_range_slider_single_wrapper %}
+                            <div class="acris-range-slider-single range-slider-single">
+                                {% block component_filter_range_slider_single_wrapper_bar %}
+                                    <div class="range-slider-single-bar">
+                                        {% block component_filter_range_slider_single_wrapper_handler %}
+                                            <div class="range-slider-single-button"></div>
+                                        {% endblock %}
+                                    </div>
+                                {% endblock %}
+                            </div>
+                        {% endblock %}
+
+                        {% block component_filter_range_slider_single_info %}
+                            <div class="acris-range-slider-single-info">
+                                {% block component_filter_range_slider_single_info_wrapper %}
+                                    {% block component_filter_range_slider_single_info_no_value %}
+                                        <span id="acris-range-info-no-val-wrapper"
+                                              class="acris-range-info-no-selection">
+                                             <span class="acris-range-info-from">{{ 'acrisFilter.filterRangeSliderFrom'|trans|sw_sanitize }}</span>
+                                             <span class="acris-range-info-value">
+                                                 <span class="acris-range-info-value-from">{{ minElementValue }}</span> {{ currencySymbol }}
+                                             </span>
+                                             <span class="acris-range-info-to">{{ 'acrisFilter.filterRangeSliderTo'|trans|sw_sanitize }}</span>
+                                             <span class="acris-range-info-value">
+                                                 <span class="acris-range-info-value-to">{{ maxElementValue }}</span> {{ currencySymbol }}
+                                             </span>
+                                        </span>
+                                    {% endblock %}
+                                    {% block component_filter_range_slider_single_info_value %}
+                                        <span id="acris-range-info-val-wrapper"
+                                              class="acris-range-info-from-wrapper acris-filter-d-none">
+                                            <span class="acris-range-single-text-before">{{ filterTextBefore }}</span>
+                                                <span class="acris-range-info-value">
+                                                    <span id="acris-range-info-min"
+                                                          class="acris-range-info-value-from">{% if currentMinValue %}{{ currentMinValue }}{% else %}{{ minElementValue }}{% endif %}</span> {{ currencySymbol }}
+                                                </span>
+                                             <span class="acris-range-single-text-after">{{ filterTextAfter }}</span>
+                                         </span>
+                                    {% endblock %}
+                                {% endblock %}
+                            </div>
+                        {% endblock %}
+                    </div>
+                {% endblock %}
+            </div>
+        {% endblock %}
+    </div>
+{% endblock %}
