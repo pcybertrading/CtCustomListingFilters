@@ -3,7 +3,6 @@
 {% block component_filter_panel %}
     {% block component_filter_panel_header %}
         <div class="filter-panel-offcanvas-header">
-            <h1>hello</h1>
             <h2 data-id="off-canvas-headline" class="filter-panel-offcanvas-only filter-panel-offcanvas-title">
                 {{ 'listing.filterTitleText'|trans }}
             </h2>
@@ -15,6 +14,7 @@
 
     {# @var listing \Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult #}
     {% block component_filter_panel_element %}
+        <h1>test</h1>
         <div class="filter-panel{% if sidebar %} is--sidebar{% endif %}" role="region" aria-label="{{ 'listing.filterTitleText'|trans|sw_sanitize }}">
             {% block component_filter_panel_items_container %}
                 <div class="filter-panel-items-container" role="list">

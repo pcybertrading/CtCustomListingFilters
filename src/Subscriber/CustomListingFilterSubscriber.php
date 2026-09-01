@@ -101,6 +101,9 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 //        /** @var FilterEntity|null $categoryFilter */
 //        $categoryFilter = $filterResult->getEntities()->filterByProperty('identifier', 'categories')->first();
 //
+
+        $event->getResult()->addExtension('hello', ['foo' => 'bar']);
+
         $this->buildCategoryTree($event->getResult(), $event->getSalesChannelContext());
     }
 
