@@ -3,8 +3,6 @@
 namespace CtCustomListingFilters\Subscriber;
 
 use Acris\CustomerProductGroup\Custom\Events\CustomerProductGroupResultEvent;
-use Acris\Filter\Custom\FilterDefinition;
-use Acris\Filter\Custom\FilterEntity;
 use Acris\ProductFinder\Custom\Events\ProductFinderResultEvent;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -87,125 +85,6 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
             $ids
         );
         $filters->add($filter);
-    }
-
-
-    /**
-     * Keeps only valid uuids, so an invalid id from the url cannot reach the DAL,
-     * where it would throw an InvalidUuidException and break the whole listing page.
-     *
-     * @param string[] $ids
-     * @return string[]
-     */
-    private function filterValidUuids(array $ids): array
-    {
-        $valid = [];
-        foreach ($ids as $id) {
-            if (is_string($id) && Uuid::isValid($id)) {
-                $valid[] = $id;
-            }
-        }
-
-        return array_values(array_unique($valid));
-    }
-
-    /**
-     * Accepts only numeric values under a valid uuid key, limited in amount.
-     *
-     * @param array<string|int, mixed> $values
-     * @return array<string, float>
-     */
-
-    private function buildCategory(array $selectedCategoryIds, Context $context): \Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\Filter
-    {
-        $requestedCategoryIds = $selectedCategoryIds;
-        $selectedCategoryIds = $this->filterValidUuids($selectedCategoryIds);
-
-        // ids were requested but none of them is a valid uuid, so nothing can match
-        if ($selectedCategoryIds === [] && $requestedCategoryIds !== []) {
-            return new EqualsAnyFilter('product.id', [Uuid::randomHex()]);
-        }
-
-        if ($selectedCategoryIds === []) {
-            return new EqualsFilter('product.active', true);
-        }
-
-        $directCategoryIds = [];
-
-        $criteria = new Criteria($selectedCategoryIds);
-        $criteria->addFields(['id']);
-
-        $categories = $this->categoryRepository->search($criteria, $context)->getEntities();
-        foreach ($categories as $category) {
-            if (!$category instanceof PartialEntity) {
-                continue;
-            }
-
-            $directCategoryIds[] = $category->getId();
-        }
-
-        $queries = [];
-        if ($directCategoryIds !== []) {
-            $queries[] = new EqualsAnyFilter('product.categoriesRo.id', array_values(array_unique($directCategoryIds)));
-        }
-
-        // If no queries are generated, return a filter that excludes all products
-        if ($queries === []) {
-            return new EqualsAnyFilter('product.id', [Uuid::randomHex()]);
-        }
-
-        return new MultiFilter(MultiFilter::CONNECTION_OR, $queries);
-    }
-
-
-    private function buildCategoryTree(ProductListingResult $productListingResult, SalesChannelContext $context, ?FilterEntity $categoryFilter = null): void
-    {
-        $categoryAggregation = $productListingResult->getAggregations()->get('categories');
-
-        if (!$categoryAggregation instanceof EntityResult || $categoryAggregation->getEntities() === null || $categoryAggregation->getEntities()->count() === 0) {
-            return;
-        }
-
-        $categoryCollection = $categoryAggregation->getEntities();
-        if (!$categoryCollection instanceof CategoryCollection) {
-            return;
-        }
-
-        if ($categoryFilter && $categoryFilter->getLimitCategoryFilterScope() === FilterDefinition::LIMIT_CATEGORY_FILTER_SCOPE_CURRENT_TREE) {
-            $request = $this->requestStack->getCurrentRequest();
-            $navigationId = $request?->attributes->get('navigationId');
-
-            if ($navigationId) {
-                $criteria = new Criteria([$navigationId]);
-                $criteria->addFields(['id', 'path']);
-
-                /** @var CategoryEntity|null $currentCategory */
-                $currentCategory = $this->categoryRepository->search($criteria, $context->getContext())->first();
-
-                if ($currentCategory) {
-                    $categoryCollection = $categoryCollection->filter(function (CategoryEntity $category) use ($currentCategory) {
-
-                        error_log(print_r(array(date('h:i:s'), 'world'), true)."\n", 3, '/var/www/html' . '/error.log');
-
-                        return $category->getId() === $currentCategory->getId() ||
-                            str_contains((string)$category->get('path'), (string)$currentCategory->getId()) ||
-                            str_contains((string)$currentCategory->get('path'), (string)$category->getId());
-                    });
-
-                    $levels = [];
-                    foreach ($categoryCollection as $category) {
-                        $level = $category->getLevel();
-                        $levels[$level] = ($levels[$level] ?? 0) + 1;
-                    }
-
-                    $categoryCollection = $categoryCollection->filter(function (CategoryEntity $category) use ($levels) {
-                        return ($levels[$category->getLevel()] ?? 0) > 1;
-                    });
-
-                    $categoryAggregation->assign(['entities' => $categoryCollection]);
-                }
-            }
-        }
     }
 
     private function getDeliveryTimeIds(Request $request): array
