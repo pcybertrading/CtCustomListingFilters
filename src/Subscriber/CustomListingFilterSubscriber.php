@@ -191,6 +191,8 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
                 if ($currentCategory) {
                     $categoryCollection = $categoryCollection->filter(function (CategoryEntity $category) use ($currentCategory) {
 
+                        error_log(print_r(array(date('h:i:s'), 'world'), true)."\n", 3, '/var/www/html' . '/error.log');
+
                         return $category->getId() === $currentCategory->getId() ||
                             str_contains((string)$category->get('path'), (string)$currentCategory->getId()) ||
                             str_contains((string)$currentCategory->get('path'), (string)$category->getId());

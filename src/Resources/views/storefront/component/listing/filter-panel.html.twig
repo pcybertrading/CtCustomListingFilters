@@ -1,13 +1,22 @@
 {% sw_extends '@Storefront/storefront/component/listing/filter-panel.html.twig' %}
 
-{% block component_filter_panel_element %}
-    {{ dump(listing) }}
-    {{ parent() }}
-{% endblock %}
-
 {% block component_filter_panel_items %}
     {% block component_filter_panel_item_manufacturer %}
         {{ parent() }}
+    {% endblock %}
+
+    {% block component_filter_panel_item_category %}
+        {# @var categories \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
+        {% set categories = listing.aggregations.get('categories') %}
+        {% if not categories.entities is empty %}
+            {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' with {
+                elements: categories.entities,
+                sidebar: sidebar,
+                name: 'categories',
+                displayName: 'Kategorie',
+                ariaLabel: ''
+            } %}
+        {% endif %}
     {% endblock %}
 
     {% block component_filter_panel_item_delivery_time %}
@@ -21,20 +30,6 @@
                 sidebar: sidebar,
                 name: 'deliveryTime',
                 displayName: 'Lieferzeit',
-                ariaLabel: ''
-            } %}
-        {% endif %}
-    {% endblock %}
-
-    {% block component_filter_panel_item_category %}
-        {# @var categories \Shopware\Core\Framework\DataAbstractionLayer\Search\AggregationResult\Metric\EntityResult #}
-        {% set categories = listing.aggregations.get('categories') %}
-        {% if not categories.entities is empty %}
-            {% sw_include '@Storefront/storefront/component/listing/filter/filter-multi-select.html.twig' with {
-                elements: categories.entities,
-                sidebar: sidebar,
-                name: 'categories',
-                displayName: 'Kategorie',
                 ariaLabel: ''
             } %}
         {% endif %}
