@@ -259,10 +259,10 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
         $clonedCategoryConnection = clone $categoryCollection;
         $tree = $this->loadTree($context->getSalesChannel()->getNavigationCategoryId(), $clonedCategoryConnection, $context, $categoryFilter);
         // Check if it's a single tree
-        if (!empty($tree) && !$this->isSingleTreeStack($tree)) {
+//        if (!empty($tree) && !$this->isSingleTreeStack($tree)) {
             // Add the extension only if it's not a single tree
             $categoryAggregation->addExtension(self::CATEGORY_FILTER_AGGREGATION_TREE, new Tree(null, $tree));
-        }
+//        }
     }
 
     /**
