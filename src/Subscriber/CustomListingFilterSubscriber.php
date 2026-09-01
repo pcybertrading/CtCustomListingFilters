@@ -83,12 +83,14 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 
         $filters->add($deliveryTimeFilter);
 
+        $ids = $this->getCategoryIds($request);
+
         $filter = new Filter(
             'categories',
-            true,
+            !empty($ids),
             [new EntityAggregation('categories', 'product.categoriesRo.id', 'category')],
-            $this->buildCategory([], $event->getSalesChannelContext()->getContext()),
-            []
+            $this->buildCategory($ids, $event->getSalesChannelContext()->getContext()),
+            $ids
         );
         $filters->add($filter);
     }
@@ -226,4 +228,22 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 
         return $ids;
     }
+
+    private function getCategoryIds(Request $request): array
+    {
+        $ids = $request->query->get('categories', '');
+        if ($request->isMethod(Request::METHOD_POST)) {
+            $ids = $request->request->get('categories', '');
+        }
+
+        if (\is_string($ids)) {
+            $ids = explode('|', $ids);
+        }
+
+        /** @var list<string> $ids */
+        $ids = array_filter((array)$ids);
+
+        return $ids;
+    }
+
 }
