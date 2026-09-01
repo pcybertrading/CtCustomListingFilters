@@ -125,19 +125,14 @@ class CustomListingFilterSubscriber implements EventSubscriberInterface
 
         $filters->add($deliveryTimeFilter);
 
-        $aggregations[] = new EntityAggregation('categories', 'product.categoriesRo.id', 'category');
-
         $filter = new Filter(
             'categories',
             true,
-            $aggregations,
+            [new EntityAggregation('categories', 'product.categoriesRo.id', 'category')],
             $this->buildCategory([], $event->getSalesChannelContext()->getContext()),
             []
         );
         $filters->add($filter);
-
-        $categoryFilter = $this->getCategoryFilter($request);
-        $filters->add($categoryFilter);
     }
 
 
